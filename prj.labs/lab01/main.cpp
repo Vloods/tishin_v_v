@@ -68,6 +68,7 @@ Mat gam_corr_pow(const Mat& image, double gamma_){
     return image_float;
 }
 
+// Applies a gamma correction with the specified coefficient to the image using direct access to pixels.
 Mat gam_corr(const Mat& image, double gamma_){
     Mat image_float;
     image.convertTo(image_float, CV_64F);
