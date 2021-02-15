@@ -28,11 +28,11 @@ Mat gam_corr(const Mat& image, double gamma_);
 
 // Controls operation of the program.
 int main() {
-    // Generates a gradient white-black
+    // Generates a gradient black-white
     Mat lines(60, 768, CV_8U, Scalar(0));
-    for (int r = lines.cols - 1; r >= 0; r--)
+    for (int r = 0; r < lines.cols; r++)
     {
-        lines.col( lines.cols - r - 1).setTo((int) (r/3));
+        lines.col(r).setTo((int) (r/3));
     }
 
     unsigned int start, end;
