@@ -17,10 +17,11 @@
 Рис. 1. Результаты работы программы (сверху вниз $I_1$, $G_1$, $G_2$)
 
 ### Сравнение времени выполнения:
-Время выполнения гамма-коррекции (функция pow): 407 ms.  
-Время выполнения гамма-коррекции (прямое обращение): 1694 ms.
+Время выполнения гамма-коррекции (функция pow): 659 ms.  
+Время выполнения гамма-коррекции (прямое обращение): 2801 ms.  
+Время выполнения гамма-коррекции (прямое обращение с TUP): 100 ms.
 
-При использовании встроенной в opencv функции pow время применения гамма-коррекции уменьшается в 4 раза, что говорит о высокой степени оптимизации данной библиотеки.
+При использовании встроенной в opencv функции pow время применения гамма-коррекции уменьшается в 4 раза по сравнению с поочередным возведением каждого пикселя в степень. Но если при прямом обращении использовать TUP, то его скорость будет в 7 раз больше, чем у pow (cv).
 
 Текст программы
 ---------------
@@ -53,6 +54,14 @@ Mat gam_corr_pow(const Mat& image, double gamma_);
  */
 Mat gam_corr(const Mat& image, double gamma_);
 
+/**
+ * Applies a gamma correction with the specified coefficient to the image using direct access to pixels with TUP.
+ * @param image - image for gamma correction.
+ * @param gamma_ - gamma correction coefficient.
+ * @return image with gamma correction
+ */
+Mat gam_corr_tup(const Mat& image, double gamma_);
+
 // Controls operation of the program.
 int main() {
     // Generates a gradient black-white
@@ -74,12 +83,18 @@ int main() {
     end = clock();
     std::cout << "Время выполнения гамма-коррекции (прямое обращение): " << end - start << " ms." << std::endl;
 
+    start = clock();
+    Mat image_tup = gam_corr_tup(lines, 2.4);
+    end = clock();
+    std::cout << "Время выполнения гамма-коррекции (прямое обращение с TUP): " << end - start << " ms." << std::endl;
+
     // Concatenate images
     Mat result;
     vconcat(lines, image_gcp, result);
     vconcat(result, image_gc, result);
 
     // Save result
+    imwrite("test.jpg", image_tup);
     imwrite("result.jpg", result);
 }
 
@@ -105,6 +120,18 @@ Mat gam_corr(const Mat& image, double gamma_){
     image_float.convertTo(image_float, CV_8U);
 
     return image_float;
+}
+
+// Applies a gamma correction with the specified coefficient to the image using direct access to pixels with TUP.
+Mat gam_corr_tup(const Mat& image, double gamma_){
+    Mat lookUpTable(1, 256, CV_8U);
+    uchar* p = lookUpTable.ptr();
+    for( int i = 0; i < 256; ++i)
+        p[i] = saturate_cast<uchar>(pow(i / 255.0, gamma_) * 255.0);
+    Mat res = image.clone();
+    LUT(image, lookUpTable, res);
+
+    return res;
 }
 @cpp_source@
 ```

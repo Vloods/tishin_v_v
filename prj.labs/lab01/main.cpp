@@ -26,6 +26,14 @@ Mat gam_corr_pow(const Mat& image, double gamma_);
  */
 Mat gam_corr(const Mat& image, double gamma_);
 
+/**
+ * Applies a gamma correction with the specified coefficient to the image using direct access to pixels with TUP.
+ * @param image - image for gamma correction.
+ * @param gamma_ - gamma correction coefficient.
+ * @return image with gamma correction
+ */
+Mat gam_corr_tup(const Mat& image, double gamma_);
+
 // Controls operation of the program.
 int main() {
     // Generates a gradient black-white
@@ -47,12 +55,18 @@ int main() {
     end = clock();
     std::cout << "Время выполнения гамма-коррекции (прямое обращение): " << end - start << " ms." << std::endl;
 
+    start = clock();
+    Mat image_tup = gam_corr_tup(lines, 2.4);
+    end = clock();
+    std::cout << "Время выполнения гамма-коррекции (прямое обращение с TUP): " << end - start << " ms." << std::endl;
+
     // Concatenate images
     Mat result;
     vconcat(lines, image_gcp, result);
     vconcat(result, image_gc, result);
 
     // Save result
+    imwrite("test.jpg", image_tup);
     imwrite("result.jpg", result);
 }
 
@@ -78,4 +92,16 @@ Mat gam_corr(const Mat& image, double gamma_){
     image_float.convertTo(image_float, CV_8U);
 
     return image_float;
+}
+
+// Applies a gamma correction with the specified coefficient to the image using direct access to pixels with TUP.
+Mat gam_corr_tup(const Mat& image, double gamma_){
+    Mat lookUpTable(1, 256, CV_8U);
+    uchar* p = lookUpTable.ptr();
+    for( int i = 0; i < 256; ++i)
+        p[i] = saturate_cast<uchar>(pow(i / 255.0, gamma_) * 255.0);
+    Mat res = image.clone();
+    LUT(image, lookUpTable, res);
+
+    return res;
 }
